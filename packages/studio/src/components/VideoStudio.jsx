@@ -79,7 +79,7 @@ function DropdownItem({ label, selected, onClick }) {
 function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
     const [search, setSearch] = useState('');
 
-    const generationModels = imageMode ? [] : t2vModels.filter(m => m.id === 'ltx-free-t2v');
+    const generationModels = imageMode ? [] : t2vModels.filter(m => m.id === 'agnes-video-2.5-flash');
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
@@ -757,7 +757,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                             Video Studio
                         </h1>
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
-                            Free text-to-video using the public LTX GPU queue; wait times may vary
+                            Agnes Video 2.5 Flash - 720P text-to-video
                         </p>
                     </div>
 

@@ -364,15 +364,68 @@ export async function generateI2I(apiKey, params) {
     return submitTask(apiKey, slug, input, params.onRequestId, 60);
 }
 
-export async function generateVideo(apiKey, params) {
-    if (params.video_url) {
+export async function generateVideo(_apiKey, params) {
+    if (params.video_url || params.image_url) {
         throw new Error(
-            "Free mode supports text-to-video only. " +
-            "Video-to-video is disabled to avoid paid API requests."
+            "This Agnes integration currently supports text-to-video only."
         );
     }
 
-    return generateFreeLtxVideo(params);
+    const response = await fetch("/api/agnes/video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            prompt: params.prompt,
+            aspect_ratio: params.aspect_ratio || "16:9",
+            duration: params.duration || 5
+        })
+    });
+
+    const created = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(created.error || `Agnes request failed: ${response.status}`);
+    }
+
+    if (created.url) {
+        return { ...created, url: created.url };
+    }
+
+    const videoId = created.video_id;
+
+    if (!videoId) {
+        throw new Error("Agnes did not return a video ID.");
+    }
+
+    // Poll the server-side status endpoint for up to 12 minutes.
+    for (let attempt = 0; attempt < 360; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const pollResponse = await fetch(
+            `/api/agnes/video?video_id=${encodeURIComponent(videoId)}`,
+            { cache: "no-store" }
+        );
+
+        const result = await pollResponse.json().catch(() => ({}));
+
+        if (!pollResponse.ok) {
+            throw new Error(result.error || `Agnes status check failed: ${pollResponse.status}`);
+        }
+
+        const status = String(result.status || "queued").toLowerCase();
+
+        if (result.url) {
+            return { ...result, id: videoId, url: result.url };
+        }
+
+        if (["failed", "fail", "error", "cancelled"].includes(status)) {
+            throw new Error(result.error || "Agnes video generation failed.");
+        }
+    }
+
+    throw new Error(
+        `Agnes is still processing video ${videoId}. Check the Agnes task status before retrying.`
+    );
 }
 
 export async function generateI2V(apiKey, params) {

@@ -2111,13 +2111,13 @@ export const getAspectRatiosForModel = (modelId) => {
 // ==========================================
 export const t2vModels = [
   {
-    "id": "ltx-free-t2v",
-    "name": "LTX Free (Hugging Face)",
+    "id": "agnes-video-2.5-flash",
+    "name": "Agnes Video 2.5 Flash",
     "inputs": {
       "prompt": { "type": "string", "title": "Prompt", "name": "prompt", "description": "The prompt to generate the video" },
       "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "9:21"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" },
-      "duration": { "title": "Duration", "name": "duration", "type": "int", "description": "The duration of the generated video in seconds", "default": 5 },
-      "resolution": { "enum": ["480p", "720p", "1080p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "The resolution of the generated video.", "default": "480p" }
+      "duration": { "enum": [4, 5, 6, 8, 10, 12], "title": "Duration", "name": "duration", "type": "int", "description": "Video duration in seconds", "default": 5 },
+      "resolution": { "enum": ["720P"], "title": "Resolution", "name": "resolution", "type": "string", "description": "Agnes Flash supports 720P.", "default": "720P" }
     }
   },
   {

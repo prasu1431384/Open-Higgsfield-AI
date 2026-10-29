@@ -17,12 +17,12 @@ function FreeModeNotice({ title, detail }) {
         <h2 className="mb-4 text-2xl font-black text-white">{title}</h2>
         <p className="mb-6 text-sm leading-7 text-secondary">{detail}</p>
         <a
-          href="https://huggingface.co/spaces/Lightricks/ltx-video-distilled"
+          href="https://agnes-ai.com/"
           target="_blank"
           rel="noreferrer"
           className="inline-block rounded-xl bg-primary px-5 py-3 text-sm font-bold text-black"
         >
-          Open free LTX demo
+          Open Agnes AI
         </a>
       </div>
     </div>
@@ -70,7 +70,7 @@ export default function StandaloneShell() {
           </nav>
 
           <span className="text-xs font-bold text-[#d9ff00]">
-            FREE LTX MODE · NO KIE CREDITS
+            AGNES VIDEO 2.5 FLASH · SERVER API KEY
           </span>
         </div>
       </header>
