@@ -213,6 +213,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     // ── generation / canvas ──
     const [generating, setGenerating] = useState(false);
     const [generateError, setGenerateError] = useState(null);
+    const [generationStatus, setGenerationStatus] = useState('');
     const [canvasUrl, setCanvasUrl] = useState(null);
     const [canvasModel, setCanvasModel] = useState(null);
     const [showCanvas, setShowCanvas] = useState(false);
@@ -482,6 +483,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
         setGenerating(true);
         setGenerateError(null);
+        setGenerationStatus('Sending request to Agnes...');
 
         let hadError = false;
 
@@ -549,7 +551,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 if (selectedQuality) params.quality = selectedQuality;
                 if (selectedMode) params.mode = selectedMode;
 
-                res = await generateVideo(apiKey, params);
+                res = await generateVideo(apiKey, { ...params, onStatus: setGenerationStatus });
                 if (!res?.url) throw new Error('No video URL returned by API');
 
                 const genId = res.id || Date.now().toString();
@@ -572,6 +574,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setTimeout(() => setGenerateError(null), 4000);
         } finally {
             setGenerating(false);
+            setGenerationStatus('');
         }
     }, [
         apiKey, prompt, v2vMode, imageMode, selectedModel, selectedAr, selectedDuration,
@@ -1013,6 +1016,15 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     )}
                                 </button>
                             </div>
+                            {generating && generationStatus && (
+                                <div
+                                    role="status"
+                                    aria-live="polite"
+                                    className="mx-2 mt-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-xs text-primary"
+                                >
+                                    {generationStatus}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </>

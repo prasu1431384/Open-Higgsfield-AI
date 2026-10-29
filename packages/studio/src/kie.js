@@ -367,27 +367,60 @@ export async function generateI2I(apiKey, params) {
 export async function generateVideo(_apiKey, params) {
     if (params.video_url || params.image_url) {
         throw new Error(
-            "This Agnes integration currently supports text-to-video only."
+            "Agnes integration currently supports text-to-video only."
         );
     }
 
-    const response = await fetch("/api/agnes/video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            prompt: params.prompt,
-            aspect_ratio: params.aspect_ratio || "16:9",
-            duration: params.duration || 5
-        })
-    });
+    const retryWaits = [10, 20, 30, 45];
+    let retryCount = 0;
+    let created;
 
-    const created = await response.json().catch(() => ({}));
+    while (true) {
+        params.onStatus?.(
+            retryCount === 0
+                ? "Sending request to Agnes..."
+                : "Retrying Agnes queue..."
+        );
 
-    if (!response.ok) {
-        throw new Error(created.error || `Agnes request failed: ${response.status}`);
+        const response = await fetch("/api/agnes/video", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                prompt: params.prompt,
+                aspect_ratio: params.aspect_ratio || "16:9",
+                duration: params.duration || 5
+            })
+        });
+
+        created = await response.json().catch(() => ({}));
+
+        if (response.ok) break;
+
+        const message = String(
+            created.error || `Agnes request failed: ${response.status}`
+        );
+
+        const queueFull =
+            /\bHTTP 503\b|queue (?:is )?full|please retry later/i.test(message);
+
+        // Retry only explicit queue-full errors.
+        // Do not retry other API errors automatically.
+        if (!queueFull || retryCount >= retryWaits.length) {
+            throw new Error(message);
+        }
+
+        const waitSeconds = retryWaits[retryCount];
+        retryCount += 1;
+
+        params.onStatus?.(
+            `Agnes queue is full. Automatic retry ${retryCount}/${retryWaits.length} in ${waitSeconds} seconds...`
+        );
+
+        await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
     }
 
     if (created.url) {
+        params.onStatus?.("Video ready!");
         return { ...created, url: created.url };
     }
 
@@ -397,7 +430,9 @@ export async function generateVideo(_apiKey, params) {
         throw new Error("Agnes did not return a video ID.");
     }
 
-    // Poll the server-side status endpoint for up to 12 minutes.
+    params.onStatus?.("Request accepted. Waiting for video generation...");
+
+    // Check task status for up to 12 minutes.
     for (let attempt = 0; attempt < 360; attempt++) {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -409,25 +444,34 @@ export async function generateVideo(_apiKey, params) {
         const result = await pollResponse.json().catch(() => ({}));
 
         if (!pollResponse.ok) {
-            throw new Error(result.error || `Agnes status check failed: ${pollResponse.status}`);
+            throw new Error(
+                result.error ||
+                `Agnes status check failed: ${pollResponse.status}`
+            );
         }
 
         const status = String(result.status || "queued").toLowerCase();
 
         if (result.url) {
+            params.onStatus?.("Video ready!");
             return { ...result, id: videoId, url: result.url };
         }
 
         if (["failed", "fail", "error", "cancelled"].includes(status)) {
             throw new Error(result.error || "Agnes video generation failed.");
         }
+
+        if (attempt > 0 && attempt % 15 === 0) {
+            params.onStatus?.(
+                `Agnes is processing your video... ${Math.round((attempt + 1) * 2)} seconds elapsed.`
+            );
+        }
     }
 
     throw new Error(
-        `Agnes is still processing video ${videoId}. Check the Agnes task status before retrying.`
+        `Agnes is still processing video ${videoId}. Check the task status before retrying.`
     );
 }
-
 export async function generateI2V(apiKey, params) {
     const settings = videoSlug(params, 'i2v', !!params.image_url);
     if (settings.family === 'veo') return generateVeo(apiKey, params, settings);
