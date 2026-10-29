@@ -1,119 +1,104 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
-import ApiKeyModal from './ApiKeyModal';
+import { useState, useEffect } from 'react';
+import { VideoStudio } from 'studio';
 
 const TABS = [
-  { id: 'image',   label: 'Image Studio' },
-  { id: 'video',   label: 'Video Studio' },
+  { id: 'image', label: 'Image Studio' },
+  { id: 'video', label: 'Video Studio' },
   { id: 'lipsync', label: 'Lip Sync' },
-  { id: 'cinema',  label: 'Cinema Studio' },
+  { id: 'cinema', label: 'Cinema Studio' },
 ];
 
-const STORAGE_KEY = 'kie_key';
+function FreeModeNotice({ title, detail }) {
+  return (
+    <div className="h-full w-full flex items-center justify-center bg-app-bg p-6">
+      <div className="max-w-xl rounded-3xl border border-white/10 bg-[#111]/90 p-8 text-center">
+        <h2 className="mb-4 text-2xl font-black text-white">{title}</h2>
+        <p className="mb-6 text-sm leading-7 text-secondary">{detail}</p>
+        <a
+          href="https://huggingface.co/spaces/Lightricks/ltx-video-distilled"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block rounded-xl bg-primary px-5 py-3 text-sm font-bold text-black"
+        >
+          Open free LTX demo
+        </a>
+      </div>
+    </div>
+  );
+}
 
 export default function StandaloneShell() {
-  const [apiKey, setApiKey] = useState(null);
-  const [activeTab, setActiveTab] = useState('image');
-  const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState('video');
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setApiKey(stored);
   }, []);
 
-  const handleKeySave = useCallback((key) => {
-    localStorage.setItem(STORAGE_KEY, key);
-    setApiKey(key);
-  }, []);
-
-  const handleKeyChange = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setApiKey(null);
-  }, []);
-
-  if (!hasMounted) return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-      <div className="animate-spin text-[#d9ff00] text-3xl">◌</div>
-    </div>
-  );
-
-  if (!apiKey) {
-    return <ApiKeyModal onSave={handleKeySave} />;
+  if (!hasMounted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#050505]">
+        <div className="animate-spin text-[#d9ff00] text-3xl">◌</div>
+      </div>
+    );
   }
 
   return (
-    <div className="h-screen bg-[#050505] flex flex-col overflow-hidden">
-      {/* Header */}
-      <header className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-0 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <span className="text-white font-black text-lg tracking-wider uppercase">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#050505]">
+      <header className="flex-shrink-0 border-b border-white/5 px-4 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-lg font-black uppercase tracking-wider text-white">
             Open Higgsfield AI
           </span>
+
+          <nav className="flex flex-wrap items-center gap-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-t-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-[#d9ff00] text-black'
+                    : 'text-white/50 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <span className="text-xs font-bold text-[#d9ff00]">
+            FREE LTX MODE · NO KIE CREDITS
+          </span>
         </div>
-
-        {/* Tabs */}
-        <nav className="flex items-center gap-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-[#d9ff00] text-black'
-                  : 'text-white/50 hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Settings */}
-        <button
-          onClick={() => setShowSettings(true)}
-          className="text-white/40 hover:text-white text-sm transition-colors"
-        >
-          ⚙ Settings
-        </button>
       </header>
 
-      {/* Studio Content */}
-      <div className="flex-1">
-        {activeTab === 'image'   && <ImageStudio   apiKey={apiKey} />}
-        {activeTab === 'video'   && <VideoStudio   apiKey={apiKey} />}
-        {activeTab === 'lipsync' && <LipSyncStudio apiKey={apiKey} />}
-        {activeTab === 'cinema'  && <CinemaStudio  apiKey={apiKey} />}
-      </div>
+      <main className="min-h-0 flex-1">
+        {activeTab === 'video' && <VideoStudio apiKey={null} />}
 
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-8 w-full max-w-md">
-            <h2 className="text-white font-bold text-xl mb-6">Settings</h2>
-            <p className="text-white/50 text-sm mb-4">
-              Current API key: <span className="text-white/80 font-mono">{apiKey.slice(0, 8)}••••••••</span>
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleKeyChange}
-                className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-colors"
-              >
-                Change API Key
-              </button>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="flex-1 py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 text-sm transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {activeTab === 'image' && (
+          <FreeModeNotice
+            title="Image Studio"
+            detail="To avoid paid API calls, image generation is disabled in this free-only build. Text-to-video is available in Video Studio."
+          />
+        )}
+
+        {activeTab === 'lipsync' && (
+          <FreeModeNotice
+            title="Lip Sync"
+            detail="Lip-sync generation needs a separate hosted model. It is disabled here to avoid paid API requests."
+          />
+        )}
+
+        {activeTab === 'cinema' && (
+          <FreeModeNotice
+            title="Cinema Studio"
+            detail="This free-only build currently provides text-to-video through LTX. Other generation modes are disabled."
+          />
+        )}
+      </main>
     </div>
   );
 }

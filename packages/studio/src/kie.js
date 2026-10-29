@@ -150,6 +150,208 @@ function videoInput(params, settings) {
     return input;
 }
 
+
+const FREE_LTX_SPACE =
+    "https://lightricks-ltx-video-distilled.hf.space";
+
+function getFreeLtxVideoUrl(value) {
+    if (!value) return null;
+
+    if (typeof value === "string") {
+        const path = value.trim();
+
+        if (/^https?:\/\//i.test(path)) {
+            return path;
+        }
+
+        if (
+            path.startsWith("/gradio_api/file=") ||
+            path.startsWith("/file=")
+        ) {
+            return FREE_LTX_SPACE + path;
+        }
+
+        if (path.startsWith("gradio_api/file=")) {
+            return FREE_LTX_SPACE + "/" + path;
+        }
+
+        if (path.startsWith("/tmp/") || path.startsWith("tmp/")) {
+            const normalized = path.startsWith("/") ? path : "/" + path;
+            return FREE_LTX_SPACE +
+                "/gradio_api/file=" + encodeURI(normalized);
+        }
+
+        return null;
+    }
+
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            const url = getFreeLtxVideoUrl(item);
+            if (url) return url;
+        }
+        return null;
+    }
+
+    if (typeof value === "object") {
+        for (const key of ["url", "video", "path", "name"]) {
+            if (value[key]) {
+                const url = getFreeLtxVideoUrl(value[key]);
+                if (url) return url;
+            }
+        }
+
+        for (const item of Object.values(value)) {
+            const url = getFreeLtxVideoUrl(item);
+            if (url) return url;
+        }
+    }
+
+    return null;
+}
+
+async function generateFreeLtxVideo(params) {
+    const dimensions = {
+        "16:9": [384, 672],
+        "9:16": [672, 384],
+        "1:1": [512, 512],
+        "4:3": [480, 640],
+        "3:4": [640, 480],
+        "3:2": [448, 672],
+        "2:3": [672, 448],
+        "21:9": [320, 704],
+        "9:21": [704, 320]
+    };
+
+    const ratio = params.aspect_ratio || "16:9";
+    const [height, width] = dimensions[ratio] || dimensions["16:9"];
+
+    const duration = Math.max(
+        0.3,
+        Math.min(8.5, Number(params.duration || 5))
+    );
+
+    const inputData = [
+        params.prompt || "",
+        "worst quality, inconsistent motion, blurry, jittery, distorted",
+        null,
+        null,
+        height,
+        width,
+        "text-to-video",
+        duration,
+        9,
+        42,
+        true,
+        3.0,
+        false
+    ];
+
+    // Submit to the public LTX Space; no KIE API key is used.
+    const submitResponse = await fetch(
+        `${FREE_LTX_SPACE}/gradio_api/call/text_to_video`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: inputData })
+        }
+    );
+
+    if (!submitResponse.ok) {
+        const message = await submitResponse.text().catch(() => "");
+        throw new Error(
+            `Free LTX queue unavailable (HTTP ${submitResponse.status}). ` +
+            "No paid KIE request was sent. Try again later. " +
+            message.slice(0, 100)
+        );
+    }
+
+    const submitted = await submitResponse.json();
+
+    if (!submitted.event_id) {
+        throw new Error(
+            submitted.error ||
+            "Free LTX did not return a queue ID. Try the public demo directly."
+        );
+    }
+
+    // Wait for the public Space to finish the generation job.
+    const resultResponse = await fetch(
+        `${FREE_LTX_SPACE}/gradio_api/call/text_to_video/` +
+        encodeURIComponent(submitted.event_id),
+        { headers: { "Accept": "text/event-stream" } }
+    );
+
+    const streamText = await resultResponse.text();
+
+    if (!resultResponse.ok) {
+        throw new Error(
+            `Free LTX result request failed (HTTP ${resultResponse.status}).`
+        );
+    }
+
+    let completedData = null;
+
+    for (const block of streamText.split(/\r?\n\r?\n/)) {
+        const eventMatch = block.match(/^event:\s*([^\r\n]+)/m);
+        const dataMatch = block.match(/^data:\s*(.+)$/m);
+
+        const eventName = eventMatch ? eventMatch[1].trim() : "";
+        const dataText = dataMatch ? dataMatch[1].trim() : "";
+
+        if (eventName === "error") {
+            throw new Error(
+                "Free LTX generation failed: " +
+                (dataText || "The public GPU queue returned an error.")
+            );
+        }
+
+        if (eventName === "complete" && dataText) {
+            completedData = dataText;
+            break;
+        }
+    }
+
+    // Fallback for Gradio responses with different SSE formatting.
+    if (!completedData) {
+        const matches = [
+            ...streamText.matchAll(/^data:\s*(.+)$/gm)
+        ];
+
+        if (matches.length) {
+            completedData = matches[matches.length - 1][1].trim();
+        }
+    }
+
+    if (!completedData) {
+        throw new Error(
+            "No result received. The free Space may be busy or asleep."
+        );
+    }
+
+    let output;
+
+    try {
+        output = JSON.parse(completedData);
+    } catch {
+        throw new Error("Free LTX returned an unreadable result.");
+    }
+
+    const videoResult = Array.isArray(output) ? output[0] : output;
+    const url = getFreeLtxVideoUrl(videoResult);
+
+    if (!url) {
+        throw new Error(
+            "The Space finished without a usable video URL. " +
+            "Try the public LTX demo directly."
+        );
+    }
+
+    return {
+        id: submitted.event_id,
+        url,
+        model: "ltx-free-t2v"
+    };
+}
 export async function generateImage(apiKey, params) {
     const slug = imageSlug(params);
     const input = imageInput(params, false);
@@ -163,10 +365,14 @@ export async function generateI2I(apiKey, params) {
 }
 
 export async function generateVideo(apiKey, params) {
-    const settings = videoSlug(params, 't2v', !!params.image_url);
-    if (settings.family === 'veo') return generateVeo(apiKey, params, settings);
-    const input = videoInput(params, settings);
-    return submitTask(apiKey, settings.model, input, params.onRequestId, 900);
+    if (params.video_url) {
+        throw new Error(
+            "Free mode supports text-to-video only. " +
+            "Video-to-video is disabled to avoid paid API requests."
+        );
+    }
+
+    return generateFreeLtxVideo(params);
 }
 
 export async function generateI2V(apiKey, params) {

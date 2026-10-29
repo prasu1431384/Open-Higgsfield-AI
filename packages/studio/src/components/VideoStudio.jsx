@@ -79,7 +79,7 @@ function DropdownItem({ label, selected, onClick }) {
 function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
     const [search, setSearch] = useState('');
 
-    const generationModels = imageMode ? i2vModels : t2vModels;
+    const generationModels = imageMode ? [] : t2vModels.filter(m => m.id === 'ltx-free-t2v');
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
@@ -462,6 +462,10 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
     // ── generate ──────────────────────────────────────────────────────────────
     const handleGenerate = useCallback(async () => {
+        if (imageMode || v2vMode) {
+            alert('Free mode supports text-to-video only. Image-to-video and video-to-video are disabled to avoid paid API calls.');
+            return;
+        }
         const currentModel = getCurrentModel();
         const isExtendMode = currentModel?.requiresRequestId;
         const trimmedPrompt = prompt.trim();
@@ -753,7 +757,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                             Video Studio
                         </h1>
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
-                            Animate images into stunning AI videos with motion effects
+                            Free text-to-video using the public LTX GPU queue; wait times may vary
                         </p>
                     </div>
 
@@ -776,7 +780,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     <button
                                         type="button"
                                         title={uploadedImageUrl ? 'Clear image' : 'Upload image for Image-to-Video'}
-                                        onClick={() => uploadedImageUrl ? clearImageUpload() : imageFileInputRef.current?.click()}
+                                        onClick={() => alert('Free LTX mode supports text-to-video only. Image-to-video is disabled to avoid paid API calls.')}
                                         className={`w-10 h-10 shrink-0 rounded-xl border transition-all flex items-center justify-center relative overflow-hidden ${uploadedImageUrl ? 'border-primary/60 bg-primary/10' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/40'} group`}
                                     >
                                         {imageUploading ? (
@@ -810,7 +814,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     <button
                                         type="button"
                                         title={uploadedVideoUrl ? `${uploadedVideoName} — click to clear` : 'Upload video to remove watermark'}
-                                        onClick={() => uploadedVideoUrl ? clearVideoUpload() : videoFileInputRef.current?.click()}
+                                        onClick={() => alert('Free LTX mode supports text-to-video only. Video-to-video is disabled to avoid paid API calls.')}
                                         className={`w-10 h-10 shrink-0 rounded-xl border transition-all flex items-center justify-center relative overflow-hidden ${uploadedVideoUrl ? 'border-primary/60 bg-white/5' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/40'} group`}
                                     >
                                         {videoUploading ? (

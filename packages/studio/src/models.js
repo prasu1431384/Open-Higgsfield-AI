@@ -2111,8 +2111,8 @@ export const getAspectRatiosForModel = (modelId) => {
 // ==========================================
 export const t2vModels = [
   {
-    "id": "seedance-lite-t2v",
-    "name": "Seedance Lite",
+    "id": "ltx-free-t2v",
+    "name": "LTX Free (Hugging Face)",
     "inputs": {
       "prompt": { "type": "string", "title": "Prompt", "name": "prompt", "description": "The prompt to generate the video" },
       "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "9:21"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" },
