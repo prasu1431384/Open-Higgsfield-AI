@@ -17,12 +17,12 @@ function FreeModeNotice({ title, detail }) {
         <h2 className="mb-4 text-2xl font-black text-white">{title}</h2>
         <p className="mb-6 text-sm leading-7 text-secondary">{detail}</p>
         <a
-          href="https://agnes-ai.com/"
+          href="https://www.pixazo.ai/models/ltx"
           target="_blank"
           rel="noreferrer"
           className="inline-block rounded-xl bg-primary px-5 py-3 text-sm font-bold text-black"
         >
-          Open Agnes AI
+          Pixazo LTX Video
         </a>
       </div>
     </div>
@@ -70,7 +70,7 @@ export default function StandaloneShell() {
           </nav>
 
           <span className="text-xs font-bold text-[#d9ff00]">
-            AGNES VIDEO 2.5 FLASH · SERVER API KEY
+            PIXAZO LTX VIDEO · FREE PREVIEW
           </span>
         </div>
       </header>
@@ -95,7 +95,7 @@ export default function StandaloneShell() {
         {activeTab === 'cinema' && (
           <FreeModeNotice
             title="Cinema Studio"
-            detail="This free-only build currently provides text-to-video through LTX. Other generation modes are disabled."
+            detail="This Pixazo preview integration currently provides text-to-video only."
           />
         )}
       </main>

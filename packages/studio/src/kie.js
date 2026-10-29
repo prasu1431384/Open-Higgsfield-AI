@@ -366,111 +366,68 @@ export async function generateI2I(apiKey, params) {
 
 export async function generateVideo(_apiKey, params) {
     if (params.video_url || params.image_url) {
-        throw new Error(
-            "Agnes integration currently supports text-to-video only."
-        );
+        throw new Error("Pixazo free-preview mode supports text-to-video only.");
     }
 
-    const retryWaits = [10, 20, 30, 45];
-    let retryCount = 0;
-    let created;
+    params.onStatus?.("Sending one request to Pixazo...");
 
-    while (true) {
-        params.onStatus?.(
-            retryCount === 0
-                ? "Sending request to Agnes..."
-                : "Retrying Agnes queue..."
-        );
+    const response = await fetch("/api/pixazo/video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            prompt: params.prompt,
+            aspect_ratio: params.aspect_ratio || "16:9"
+        })
+    });
 
-        const response = await fetch("/api/agnes/video", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                prompt: params.prompt,
-                aspect_ratio: params.aspect_ratio || "16:9",
-                duration: params.duration || 5
-            })
-        });
+    const submitted = await response.json().catch(() => ({}));
 
-        created = await response.json().catch(() => ({}));
-
-        if (response.ok) break;
-
-        const message = String(
-            created.error || `Agnes request failed: ${response.status}`
-        );
-
-        const queueFull =
-            /\bHTTP 503\b|queue (?:is )?full|please retry later/i.test(message);
-
-        // Retry only explicit queue-full errors.
-        // Do not retry other API errors automatically.
-        if (!queueFull || retryCount >= retryWaits.length) {
-            throw new Error(message);
-        }
-
-        const waitSeconds = retryWaits[retryCount];
-        retryCount += 1;
-
-        params.onStatus?.(
-            `Agnes queue is full. Automatic retry ${retryCount}/${retryWaits.length} in ${waitSeconds} seconds...`
-        );
-
-        await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+    if (!response.ok) {
+        throw new Error(submitted.error || `Pixazo request failed: HTTP ${response.status}`);
     }
 
-    if (created.url) {
-        params.onStatus?.("Video ready!");
-        return { ...created, url: created.url };
+    if (submitted.url) {
+        params.onStatus?.("Video ready.");
+        return { ...submitted, url: submitted.url };
     }
 
-    const videoId = created.video_id;
-
-    if (!videoId) {
-        throw new Error("Agnes did not return a video ID.");
+    const requestId = submitted.request_id;
+    if (!requestId) {
+        throw new Error("Pixazo did not return a request ID.");
     }
 
-    params.onStatus?.("Request accepted. Waiting for video generation...");
-
-    // Check task status for up to 12 minutes.
-    for (let attempt = 0; attempt < 360; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+    // Poll the existing job only; do not submit duplicate generation requests.
+    for (let attempt = 0; attempt < 90; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 8000));
 
         const pollResponse = await fetch(
-            `/api/agnes/video?video_id=${encodeURIComponent(videoId)}`,
+            `/api/pixazo/video?request_id=${encodeURIComponent(requestId)}`,
             { cache: "no-store" }
         );
 
         const result = await pollResponse.json().catch(() => ({}));
 
         if (!pollResponse.ok) {
-            throw new Error(
-                result.error ||
-                `Agnes status check failed: ${pollResponse.status}`
-            );
+            throw new Error(result.error || `Pixazo status failed: HTTP ${pollResponse.status}`);
         }
 
-        const status = String(result.status || "queued").toLowerCase();
+        const status = String(result.status || "QUEUED").toUpperCase();
 
         if (result.url) {
-            params.onStatus?.("Video ready!");
-            return { ...result, id: videoId, url: result.url };
+            params.onStatus?.("Video ready.");
+            return { ...result, id: requestId, url: result.url };
         }
 
-        if (["failed", "fail", "error", "cancelled"].includes(status)) {
-            throw new Error(result.error || "Agnes video generation failed.");
+        if (["ERROR", "FAILED", "FAIL", "CANCELLED", "CANCELED"].includes(status)) {
+            throw new Error(result.error || `Pixazo task status: ${status}`);
         }
 
-        if (attempt > 0 && attempt % 15 === 0) {
-            params.onStatus?.(
-                `Agnes is processing your video... ${Math.round((attempt + 1) * 2)} seconds elapsed.`
-            );
+        if (attempt % 4 === 3) {
+            params.onStatus?.(`Pixazo status: ${status}. Waiting for the same request...`);
         }
     }
 
-    throw new Error(
-        `Agnes is still processing video ${videoId}. Check the task status before retrying.`
-    );
+    throw new Error(`Pixazo is still processing request ${requestId}. Check API logs before trying again.`);
 }
 export async function generateI2V(apiKey, params) {
     const settings = videoSlug(params, 'i2v', !!params.image_url);

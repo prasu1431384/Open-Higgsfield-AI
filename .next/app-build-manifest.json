@@ -1,0 +1,40 @@
+{
+  "pages": {
+    "/_not-found/page": [
+      "static/chunks/webpack-c042ca735a68d6ec.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-38b49df12a94ee57.js",
+      "static/chunks/main-app-87e82106b0eb2e65.js",
+      "static/chunks/app/_not-found/page-472ef5fdbac55da8.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack-c042ca735a68d6ec.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-38b49df12a94ee57.js",
+      "static/chunks/main-app-87e82106b0eb2e65.js",
+      "static/css/681c769eee26a440.css",
+      "static/chunks/app/layout-06962d000f58905e.js"
+    ],
+    "/api/pixazo/video/route": [
+      "static/chunks/webpack-c042ca735a68d6ec.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-38b49df12a94ee57.js",
+      "static/chunks/main-app-87e82106b0eb2e65.js",
+      "static/chunks/app/api/pixazo/video/route-3b6b76b8966f7200.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-c042ca735a68d6ec.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-38b49df12a94ee57.js",
+      "static/chunks/main-app-87e82106b0eb2e65.js",
+      "static/chunks/app/page-3b6b76b8966f7200.js"
+    ],
+    "/studio/page": [
+      "static/chunks/webpack-c042ca735a68d6ec.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-38b49df12a94ee57.js",
+      "static/chunks/main-app-87e82106b0eb2e65.js",
+      "static/chunks/app/studio/page-6844cb316c1d2951.js"
+    ]
+  }
+}

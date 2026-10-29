@@ -2111,13 +2111,13 @@ export const getAspectRatiosForModel = (modelId) => {
 // ==========================================
 export const t2vModels = [
   {
-    "id": "agnes-video-2.5-flash",
-    "name": "Agnes Video 2.5 Flash",
+    "id": "pixazo-ltx-video",
+    "name": "Pixazo LTX Video (Free Preview)",
     "inputs": {
       "prompt": { "type": "string", "title": "Prompt", "name": "prompt", "description": "The prompt to generate the video" },
-      "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "9:21"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Aspect ratio of the output video.", "default": "16:9" },
-      "duration": { "enum": [4, 5, 6, 8, 10, 12], "title": "Duration", "name": "duration", "type": "int", "description": "Video duration in seconds", "default": 5 },
-      "resolution": { "enum": ["720P"], "title": "Resolution", "name": "resolution", "type": "string", "description": "Agnes Flash supports 720P.", "default": "720P" }
+      "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Output video aspect ratio.", "default": "16:9" },
+      "duration": { "enum": [5], "title": "Duration", "name": "duration", "type": "int", "description": "Fixed 5-second free-tier test video.", "default": 5 },
+      "resolution": { "enum": ["720p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "Pixazo LTX Video 2.5 free-tier output.", "default": "720p" }
     }
   },
   {

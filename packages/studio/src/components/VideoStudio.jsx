@@ -79,7 +79,7 @@ function DropdownItem({ label, selected, onClick }) {
 function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
     const [search, setSearch] = useState('');
 
-    const generationModels = imageMode ? [] : t2vModels.filter(m => m.id === 'agnes-video-2.5-flash');
+    const generationModels = imageMode ? [] : t2vModels.filter(m => m.id === 'pixazo-ltx-video');
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
@@ -464,6 +464,10 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     // ── generate ──────────────────────────────────────────────────────────────
     const handleGenerate = useCallback(async () => {
         if (imageMode || v2vMode) {
+            alert("Pixazo preview integration supports text-to-video only.");
+            return;
+        }
+        if (imageMode || v2vMode) {
             alert('Free mode supports text-to-video only. Image-to-video and video-to-video are disabled to avoid paid API calls.');
             return;
         }
@@ -483,7 +487,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
         setGenerating(true);
         setGenerateError(null);
-        setGenerationStatus('Sending request to Agnes...');
+        setGenerationStatus('Sending request to Pixazo...');
 
         let hadError = false;
 
