@@ -2111,13 +2111,13 @@ export const getAspectRatiosForModel = (modelId) => {
 // ==========================================
 export const t2vModels = [
   {
-    "id": "pixazo-ltx-video",
-    "name": "Pixazo LTX Video (Free Preview)",
+    "id": "minimax-h3",
+    "name": "MiniMax H3 (Video + Native Audio)",
     "inputs": {
       "prompt": { "type": "string", "title": "Prompt", "name": "prompt", "description": "The prompt to generate the video" },
-      "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "Output video aspect ratio.", "default": "16:9" },
+      "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"], "title": "Aspect Ratio", "name": "aspect_ratio", "type": "string", "description": "MiniMax H3 aspect ratio.", "default": "16:9" },
       "duration": { "enum": [5], "title": "Duration", "name": "duration", "type": "int", "description": "Fixed 5-second free-tier test video.", "default": 5 },
-      "resolution": { "enum": ["720p"], "title": "Resolution", "name": "resolution", "type": "string", "description": "Pixazo LTX Video 2.5 free-tier output.", "default": "720p" }
+      "resolution": { "enum": ["768P"], "title": "Resolution", "name": "resolution", "type": "string", "description": "MiniMax H3 output. API billing applies.", "default": "768P" }
     }
   },
   {

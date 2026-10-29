@@ -17,12 +17,12 @@ function FreeModeNotice({ title, detail }) {
         <h2 className="mb-4 text-2xl font-black text-white">{title}</h2>
         <p className="mb-6 text-sm leading-7 text-secondary">{detail}</p>
         <a
-          href="https://www.pixazo.ai/models/ltx"
+          href="https://platform.minimax.io/docs/api-reference/video-generation-v2-create"
           target="_blank"
           rel="noreferrer"
           className="inline-block rounded-xl bg-primary px-5 py-3 text-sm font-bold text-black"
         >
-          Pixazo LTX Video
+          MiniMax H3 API
         </a>
       </div>
     </div>
@@ -70,7 +70,7 @@ export default function StandaloneShell() {
           </nav>
 
           <span className="text-xs font-bold text-[#d9ff00]">
-            PIXAZO LTX VIDEO · FREE PREVIEW
+            MINIMAX H3 · VIDEO + NATIVE AUDIO · API BILLING
           </span>
         </div>
       </header>
@@ -95,7 +95,7 @@ export default function StandaloneShell() {
         {activeTab === 'cinema' && (
           <FreeModeNotice
             title="Cinema Studio"
-            detail="This Pixazo preview integration currently provides text-to-video only."
+            detail="MiniMax H3 generates video with native audio. API usage may be charged."
           />
         )}
       </main>

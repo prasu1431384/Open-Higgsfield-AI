@@ -79,7 +79,7 @@ function DropdownItem({ label, selected, onClick }) {
 function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
     const [search, setSearch] = useState('');
 
-    const generationModels = imageMode ? [] : t2vModels.filter(m => m.id === 'pixazo-ltx-video');
+    const generationModels = imageMode ? [] : t2vModels.filter(m => m.id === 'minimax-h3');
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
@@ -464,7 +464,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     // ── generate ──────────────────────────────────────────────────────────────
     const handleGenerate = useCallback(async () => {
         if (imageMode || v2vMode) {
-            alert("Pixazo preview integration supports text-to-video only.");
+            alert("MiniMax H3 preview integration supports text-to-video only.");
             return;
         }
         if (imageMode || v2vMode) {
@@ -487,7 +487,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
         setGenerating(true);
         setGenerateError(null);
-        setGenerationStatus('Sending request to Pixazo...');
+        setGenerationStatus('Sending request to MiniMax H3 API...');
 
         let hadError = false;
 
@@ -764,7 +764,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                             Video Studio
                         </h1>
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
-                            Agnes Video 2.5 Flash - 720P text-to-video
+                            MiniMax H3 - 768P video + native audio
                         </p>
                     </div>
 

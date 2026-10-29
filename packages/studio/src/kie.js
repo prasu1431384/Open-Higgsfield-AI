@@ -366,12 +366,14 @@ export async function generateI2I(apiKey, params) {
 
 export async function generateVideo(_apiKey, params) {
     if (params.video_url || params.image_url) {
-        throw new Error("Pixazo free-preview mode supports text-to-video only.");
+        throw new Error("MiniMax H3 integration currently supports text-to-video only.");
     }
 
-    params.onStatus?.("Sending one request to Pixazo...");
+    params.onStatus?.("Sending one video request to MiniMax H3...");
 
-    const response = await fetch("/api/pixazo/video", {
+    // Do not retry the creation request automatically:
+    // each successful request may incur a charge.
+    const response = await fetch("/api/minimax/video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -383,51 +385,58 @@ export async function generateVideo(_apiKey, params) {
     const submitted = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(submitted.error || `Pixazo request failed: HTTP ${response.status}`);
+        throw new Error(
+            submitted.error || `MiniMax H3 API failed: HTTP ${response.status}`
+        );
     }
 
     if (submitted.url) {
-        params.onStatus?.("Video ready.");
         return { ...submitted, url: submitted.url };
     }
 
-    const requestId = submitted.request_id;
-    if (!requestId) {
-        throw new Error("Pixazo did not return a request ID.");
+    const taskId = submitted.task_id;
+    if (!taskId) {
+        throw new Error("MiniMax H3 did not return a task ID.");
     }
 
-    // Poll the existing job only; do not submit duplicate generation requests.
+    params.onStatus?.("Task accepted. Waiting for video and audio...");
+
+    // Poll the same task; this does not submit another generation request.
     for (let attempt = 0; attempt < 90; attempt++) {
         await new Promise(resolve => setTimeout(resolve, 8000));
 
-        const pollResponse = await fetch(
-            `/api/pixazo/video?request_id=${encodeURIComponent(requestId)}`,
+        const poll = await fetch(
+            `/api/minimax/video?task_id=${encodeURIComponent(taskId)}`,
             { cache: "no-store" }
         );
 
-        const result = await pollResponse.json().catch(() => ({}));
+        const result = await poll.json().catch(() => ({}));
 
-        if (!pollResponse.ok) {
-            throw new Error(result.error || `Pixazo status failed: HTTP ${pollResponse.status}`);
+        if (!poll.ok) {
+            throw new Error(
+                result.error || `MiniMax H3 status failed: HTTP ${poll.status}`
+            );
         }
 
-        const status = String(result.status || "QUEUED").toUpperCase();
+        const status = String(result.status || "processing").toLowerCase();
 
         if (result.url) {
-            params.onStatus?.("Video ready.");
-            return { ...result, id: requestId, url: result.url };
+            params.onStatus?.("Video and audio are ready.");
+            return { ...result, id: taskId, url: result.url };
         }
 
-        if (["ERROR", "FAILED", "FAIL", "CANCELLED", "CANCELED"].includes(status)) {
-            throw new Error(result.error || `Pixazo task status: ${status}`);
+        if (["failed", "fail", "error", "cancelled", "canceled"].includes(status)) {
+            throw new Error(result.error || `MiniMax H3 task status: ${status}`);
         }
 
         if (attempt % 4 === 3) {
-            params.onStatus?.(`Pixazo status: ${status}. Waiting for the same request...`);
+            params.onStatus?.(`MiniMax H3 status: ${status}. Waiting for the same task...`);
         }
     }
 
-    throw new Error(`Pixazo is still processing request ${requestId}. Check API logs before trying again.`);
+    throw new Error(
+        `MiniMax H3 task ${taskId} is still processing. Check task status before creating another video.`
+    );
 }
 export async function generateI2V(apiKey, params) {
     const settings = videoSlug(params, 'i2v', !!params.image_url);
